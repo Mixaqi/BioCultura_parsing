@@ -1,28 +1,23 @@
+from __future__ import annotations
+
+import requests
 from bs4 import BeautifulSoup
 
-# Пример HTML-кода с информацией о контакте экспонента
-html_content = """
-<div class="expositor-contact">
-    <p>
-        <span>Email:</span>
-        example@email.com
-    </p>
-</div>
-"""
+# Загрузка содержимого страницы
+url = "https://www.biocultura.org/expositor/150086/"
+response = requests.get(url)
 
-# Создание объекта BeautifulSoup для парсинга HTML
-soup = BeautifulSoup(html_content, "html.parser")
+# Проверка успешности запроса
+if response.status_code == 200:
+    # Парсинг HTML с помощью BeautifulSoup
+    soup = BeautifulSoup(response.content, "html.parser")
 
-# Находим тег <div> с классом "expositor-contact"
-expositor_contact = soup.find("div", class_="expositor-contact")
+    # Находим все теги <p> с классом "team-subtitle" на странице
+    team_subtitles = soup.find_all("p")
 
-# Если тег <div> с классом "expositor-contact" найден, извлекаем электронную почту
-if expositor_contact:
-    email_span = expositor_contact.find("span", text="Email:")
-    if email_span:
-        email = email_span.find_next_sibling("p").get_text(strip=True)
-        print("Email:", email)
-    else:
-        print("Email не найден.")
+    # Проверяем наличие email в каждом теге <p> и выводим только те, где email есть
+    for subtitle in team_subtitles:
+        if "Email:" in subtitle.text.strip():
+            print(subtitle.text.strip().split()[1])
 else:
-    print("Тег <div class='expositor-contact'> не найден.")
+    print(f"Ошибка при загрузке страницы: {response.status_code}")
