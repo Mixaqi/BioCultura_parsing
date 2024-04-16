@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import re
 
 import requests
@@ -9,14 +10,15 @@ class Expositor:
     baseurl = "https://www.biocultura.org/"
     expositor_list: list[Expositor] = []
 
-    def __init__(self, title: str, link: str, email: str, phone: str) -> None:
+    def __init__(self, title: str, link: str, email: str, phone: str, contact_name: str) -> None:
         self.title = title
         self.link = link
         self.email = email
         self.phone = phone
+        self.contact_name = contact_name
 
     def __str__(self) -> str:
-        return f"Expositor(title={self.title}, link={self.link}, email={self.email}, phone={self.phone})"
+        return f"Expositor(title={self.title}, link={self.link}, email={self.email}, phone={self.phone}, contact_name={self.contact_name})"
 
     @classmethod
     def get_expositor_data(cls, start_id: int, end_id: int) -> None:
@@ -41,7 +43,12 @@ class Expositor:
             phone = phone_match.group(1).strip() if phone_match else ""
 
             for title, link in zip(expositor_titles, expositor_links):
-                expositor = cls(title=title.text.strip(), link=link["href"], email=email, phone=phone)
+                expositor_contact = soup.find(class_="expositor-contact")
+                contact_text = expositor_contact.text.strip()
+                name_match = re.search(r"Contacto:\s*(.+)", contact_text)
+                name = name_match.group(1).strip() if name_match else ""
+
+                expositor = cls(title=title.text.strip(), link=link["href"], email=email, phone=phone, contact_name=name)
                 cls.expositor_list.append(expositor)
 
 
