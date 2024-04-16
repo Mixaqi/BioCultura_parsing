@@ -203,3 +203,4 @@ build/
 # Файлы сборки TypeScript
 *.js
 *.js.map
+expositor.log

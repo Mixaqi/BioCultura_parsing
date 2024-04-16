@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 
 import requests
@@ -24,8 +25,16 @@ class Expositor:
     def get_expositor_data(cls, start_id: int, end_id: int) -> None:
         cls.expositor_list = []
 
+        logging.basicConfig(filename="expositor.log", level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
+
         for page_id in range(start_id, end_id + 1):
-            response = requests.get(f"{cls.baseurl}expositor/{page_id}/")
+            try:
+                response = requests.get(f"{cls.baseurl}expositor/{page_id}/")
+                response.raise_for_status()  # Raises HTTPError for non-2xx responses
+            except requests.HTTPError as e:
+                logging.exception(f"Error fetching page {page_id}: {e}")
+                continue  # Skip to the next iteration if error occurs
+
             soup = BeautifulSoup(response.content, "lxml")
             expositor_titles = soup.find_all("h2", class_="expositor-title")
             expositor_links = soup.find_all("a", class_="red-button")
@@ -33,7 +42,11 @@ class Expositor:
 
             for email in expositor_emails:
                 if "Email:" in email.text.strip():
-                    email = email.text.strip().split()[1]
+                    email_parts = email.text.strip().split()
+                    if len(email_parts) > 1:
+                        email = email_parts[1]
+                    else:
+                        email = ""
                     break
             else:
                 email = ""
@@ -53,6 +66,6 @@ class Expositor:
 
 
 if __name__ == "__main__":
-    Expositor.get_expositor_data(start_id=150400, end_id=150405)
+    Expositor.get_expositor_data(start_id=150400, end_id=150500)
     for expositor in Expositor.expositor_list:
         print(expositor)
